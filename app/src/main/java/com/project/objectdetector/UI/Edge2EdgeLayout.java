@@ -46,12 +46,6 @@ public class Edge2EdgeLayout {
     private void setLayout(){
         activity.getWindow().setStatusBarColor(Color.TRANSPARENT);
 
-        WindowInsetsControllerCompat windowInsetsController =
-                ViewCompat.getWindowInsetsController(activity.getWindow().getDecorView());
-        if (windowInsetsController != null) {
-            windowInsetsController.setSystemBarsBehavior(BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-        }
-
         if(is169()){
             Log.e("Edge2EdgeLayout", "setLayout: Resolution "+Resources.getSystem().getDisplayMetrics().heightPixels
                     +" x "+Resources.getSystem().getDisplayMetrics().widthPixels);
