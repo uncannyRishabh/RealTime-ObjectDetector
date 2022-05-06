@@ -3,6 +3,11 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/Rishabh Raj Gupta/AndroidStudioProjects/ObjectDetector/app/src/main/res/drawable/ic_round_capture_ttd.xml" value="0.1395" />
+        <entry key="..\:/Users/Rishabh Raj Gupta/AndroidStudioProjects/ObjectDetector/app/src/main/res/drawable/ic_round_flash_off.xml" value="0.1395" />
+        <entry key="..\:/Users/Rishabh Raj Gupta/AndroidStudioProjects/ObjectDetector/app/src/main/res/drawable/ic_round_flash_on.xml" value="0.1395" />
+        <entry key="..\:/Users/Rishabh Raj Gupta/AndroidStudioProjects/ObjectDetector/app/src/main/res/drawable/ic_round_flash_on_24.xml" value="0.1395" />
+        <entry key="..\:/Users/Rishabh Raj Gupta/AndroidStudioProjects/ObjectDetector/app/src/main/res/drawable/rounded_corners.xml" value="0.1395" />
         <entry key="..\:/Users/Rishabh Raj Gupta/AndroidStudioProjects/ObjectDetector/app/src/main/res/layout/activity_main.xml" value="0.20416666666666666" />
       </map>
     </option>

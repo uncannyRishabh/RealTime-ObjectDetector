@@ -1,4 +1,4 @@
-package com.project.objectdetector.UI.VIews;
+package com.project.objectdetector.UI.Views;
 
 import android.content.Context;
 import android.graphics.Point;

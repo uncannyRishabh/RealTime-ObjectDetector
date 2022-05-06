@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
     tools:context=".MainActivity">
 
     <androidx.camera.view.PreviewView
@@ -16,16 +16,80 @@
         app:layout_constraintEnd_toEndOf="parent"
         />
 
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:orientation="vertical"
+        android:layout_marginTop="58dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/rounded_corners"
+        >
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/fps_toggle"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_margin="4dp"
+            android:padding="2dp"
+            app:shapeAppearance="@style/circularImageView"
+            android:background="@color/theme_primary_light"
+            android:src="@drawable/ic_launcher_foreground"
+            />
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/resolution_toggle"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_margin="4dp"
+            android:padding="2dp"
+            app:shapeAppearance="@style/circularImageView"
+            android:background="@color/theme_primary_light"
+            android:src="@drawable/ic_launcher_foreground"
+            />
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/flash_toggle"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_margin="4dp"
+            android:padding="2dp"
+            android:scaleType="center"
+            app:shapeAppearance="@style/circularImageView"
+            android:background="@color/theme_primary_light"
+            android:src="@drawable/ic_round_flash_off"
+            />
+    </LinearLayout>
+
     <com.google.android.material.imageview.ShapeableImageView
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+        android:id="@+id/capture_btn"
+        android:layout_width="84dp"
+        android:layout_height="84dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="88dp"
+        app:layout_constraintBottom_toTopOf="@id/horizontal_picker"
+        android:layout_marginBottom="32dp"
+        app:shapeAppearance="@style/circularImageView"
+        android:background="@color/theme_primary_dark"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_round_capture_ttd"
         />
 
-
-
+    <com.project.objectdetector.UI.Views.HorizontalPicker
+        android:id="@+id/horizontal_picker"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:ellipsize="end"
+        android:hapticFeedbackEnabled="true"
+        android:marqueeRepeatLimit="-1"
+        android:minHeight="34dp"
+        android:layout_marginBottom="48dp"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="12dp"
+        android:textSize="14.5dp"
+        app:sideItems="1"
+        />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
