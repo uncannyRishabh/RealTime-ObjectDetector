@@ -13,4 +13,10 @@
         <attr name="selectedColor" value="0xFF000000" format="reference|color"/>
 
     </declare-styleable>
+
+    <declare-styleable name="BoundingBox">
+        <attr name="android:textColor"/>
+        <attr name="android:textSize"/>
+        <attr name="fontFamily"/>
+    </declare-styleable>
 </resources>

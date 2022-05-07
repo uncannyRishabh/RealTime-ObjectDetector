@@ -2,6 +2,7 @@ package com.project.objectdetector.RTOD;
 
 
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.media.Image;
 import android.util.Log;
 
@@ -15,11 +16,14 @@ import com.google.mlkit.vision.objects.DetectedObject;
 import com.google.mlkit.vision.objects.ObjectDetection;
 import com.google.mlkit.vision.objects.ObjectDetector;
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions;
+import com.project.objectdetector.UI.Views.BoundingBox;
 
 import java.util.List;
 
 public class FrameAnalyzer implements ImageAnalysis.Analyzer {
+    private BoundingBox box;
     private ObjectDetector objectDetector;
+
     public FrameAnalyzer(){
         initializeObjectDetector();
     }
@@ -29,11 +33,15 @@ public class FrameAnalyzer implements ImageAnalysis.Analyzer {
         ObjectDetectorOptions options =
                 new ObjectDetectorOptions.Builder()
                         .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
-//                        .enableClassification()  // Optional
-//                        .enableMultipleObjects()
+                        .enableClassification()  // Optional
+                        .enableMultipleObjects()
                         .build();
 
         objectDetector = ObjectDetection.getClient(options);
+    }
+
+    public void setView(BoundingBox box){
+        this.box = box;
     }
 
     @Override
@@ -50,10 +58,12 @@ public class FrameAnalyzer implements ImageAnalysis.Analyzer {
                 for (DetectedObject detectedObject : detectedObjects) {
                     Rect boundingBox = detectedObject.getBoundingBox();
                     Integer trackingId = detectedObject.getTrackingId();
+                    box.setBoxRect(new RectF(boundingBox));
                     for (DetectedObject.Label label : detectedObject.getLabels()) {
                         String text = label.getText();
                         int index = label.getIndex();
                         float confidence = label.getConfidence();
+
                         Log.e("TAG", "onSuccess: TEXT : "+text
                                 +" tracking ID "+trackingId+
                                 " index : "+index+

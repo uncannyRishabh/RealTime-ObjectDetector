@@ -32,6 +32,7 @@ import com.google.android.material.imageview.ShapeableImageView;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.project.objectdetector.RTOD.FrameAnalyzer;
 import com.project.objectdetector.UI.Edge2EdgeLayout;
+import com.project.objectdetector.UI.Views.BoundingBox;
 import com.project.objectdetector.UI.Views.HorizontalPicker;
 
 import java.util.concurrent.ExecutionException;
@@ -43,11 +44,13 @@ public class MainActivity extends AppCompatActivity {
     private PreviewView previewView;
     private FrameAnalyzer analyzer;
     private HorizontalPicker picker;
+    private BoundingBox boundingBox;
     private ShapeableImageView fps, resolution, flash;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
 
     private float pointerX, pointerY;
     private boolean flashState = false;
+    private boolean gestureDetected = false;
 
     private Camera camera;
 
@@ -99,7 +102,24 @@ public class MainActivity extends AppCompatActivity {
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
 
+        boundingBox = findViewById(R.id.boundingBox);
         flash = findViewById(R.id.flash_toggle);
+        flash.setOnClickListener(v -> {
+            if(camera.getCameraInfo().hasFlashUnit()) {
+                if(camera!=null) {
+                    if (flashState) {
+                        flashState = false;
+                        camera.getCameraControl().enableTorch(false);
+                        flash.setImageDrawable(ContextCompat.getDrawable(this,R.drawable.ic_round_flash_off));
+                    } else {
+                        flashState = true;
+                        camera.getCameraControl().enableTorch(true);
+                        flash.setImageDrawable(ContextCompat.getDrawable(this,R.drawable.ic_round_flash_on));
+                    }
+                }
+            }
+
+        });
 
         previewView.setOnTouchListener((v, event) -> {
             int action = event.getActionMasked();
@@ -107,16 +127,6 @@ public class MainActivity extends AppCompatActivity {
                 case MotionEvent.ACTION_DOWN:{
                     pointerX = event.getX();
                     pointerY = event.getY();
-
-                    /*
-                     * FOCUS
-                     */
-
-                    MeteringPointFactory meteringPointFactory = previewView.getMeteringPointFactory();
-                    MeteringPoint meteringPoint = meteringPointFactory.createPoint(pointerX,pointerY);
-                    FocusMeteringAction focusMeteringAction = new FocusMeteringAction.Builder(meteringPoint).build();
-                    camera.getCameraControl().startFocusAndMetering(focusMeteringAction);
-
                     return true;
                 }
                 case MotionEvent.ACTION_MOVE:{
@@ -126,6 +136,7 @@ public class MainActivity extends AppCompatActivity {
                     if(event.getPointerCount() == 1) {
                         if (pointerX - event.getX() > getScreenWidth() / 4f) {
                             Log.e("TAG", "onTouch: FLING RIGHT");
+                            gestureDetected = true;
                             pointerX = event.getX();
                             if(picker.getSelectedItem() >= 0 && picker.getSelectedItem()<picker.getItems()-1) {
                                 picker.setSelectedItem(picker.getSelectedItem() + 1);
@@ -134,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         } else if (pointerX - event.getX() < -getScreenWidth() / 4f) {
                             Log.e("TAG", "onTouch: FLING LEFT");
+                            gestureDetected = true;
                             pointerX = event.getX();
                             if(picker.getSelectedItem() > 0 && picker.getSelectedItem()<picker.getItems()) {
                                 picker.setSelectedItem(picker.getSelectedItem() - 1);
@@ -146,6 +158,16 @@ public class MainActivity extends AppCompatActivity {
                 }
                 case MotionEvent.ACTION_UP:{
                     v.performClick();
+                    /*
+                     * FOCUS
+                     */
+                    if(!gestureDetected) {
+                        MeteringPointFactory meteringPointFactory = previewView.getMeteringPointFactory();
+                        MeteringPoint meteringPoint = meteringPointFactory.createPoint(pointerX, pointerY);
+                        FocusMeteringAction focusMeteringAction = new FocusMeteringAction.Builder(meteringPoint).build();
+                        camera.getCameraControl().startFocusAndMetering(focusMeteringAction);
+                    }
+                    gestureDetected = false;
                     break;
                 }
             }
@@ -154,21 +176,6 @@ public class MainActivity extends AppCompatActivity {
 
         picker.setOnItemClickedListener(this::modeSwitch);
         picker.setOnItemSelectedListener(this::modeSwitch);
-
-        flash.setOnClickListener(v -> {
-            if(camera.getCameraInfo().hasFlashUnit()) {
-                if(camera!=null) {
-                    if (flashState) {
-                        flashState = false;
-                        camera.getCameraControl().enableTorch(false);
-                    } else {
-                        flashState = true;
-                        camera.getCameraControl().enableTorch(true);
-                    }
-                }
-            }
-
-        });
 
     }
 
@@ -183,6 +190,7 @@ public class MainActivity extends AppCompatActivity {
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
 
+        analyzer.setView(boundingBox);
         imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this), image -> analyzer.analyze(image));
 
         CameraSelector cameraSelector = new CameraSelector.Builder()
@@ -190,9 +198,6 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         camera = cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis, preview);
-    }
-
-    private void closeCamera(){
 
     }
 
@@ -209,7 +214,6 @@ public class MainActivity extends AppCompatActivity {
                 ,HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
         switch (index){
             case 0:{
-                closeCamera();
 //                openImagePicker();
                 //load image into fragment
                 //pass image through classifier
