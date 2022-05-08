@@ -10,8 +10,8 @@ import android.util.Size;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.LinearLayout;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.Camera;
@@ -37,6 +37,8 @@ import com.project.objectdetector.UI.Views.HorizontalPicker;
 
 import java.util.concurrent.ExecutionException;
 
+@SuppressWarnings({"FieldCanBeLocal"
+        , "FieldMayBeLocal"})
 public class MainActivity extends AppCompatActivity {
     private static final String[] CAMERA_PERMISSION = new String[]{Manifest.permission.CAMERA};
     private static final int CAMERA_REQUEST_CODE = 10;
@@ -45,14 +47,19 @@ public class MainActivity extends AppCompatActivity {
     private FrameAnalyzer analyzer;
     private HorizontalPicker picker;
     private BoundingBox boundingBox;
-    private ShapeableImageView fps, resolution, flash;
-    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+    private ShapeableImageView fps, resolution, flash, capture;
+    private LinearLayout btnHolder;
 
     private float pointerX, pointerY;
     private boolean flashState = false;
     private boolean gestureDetected = false;
 
     private Camera camera;
+    private Preview preview;
+    private ImageAnalysis imageAnalysis;
+    private CameraSelector cameraSelector;
+    private ProcessCameraProvider cameraProvider;
+    private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
 
     private enum State {
         STILL_IMAGE,
@@ -87,9 +94,9 @@ public class MainActivity extends AppCompatActivity {
         cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
             try {
-                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                cameraProvider = cameraProviderFuture.get();
                 analyzer = new FrameAnalyzer();
-                bindImageAnalysis(cameraProvider);
+                buildCameraPreview();
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             }
@@ -102,19 +109,37 @@ public class MainActivity extends AppCompatActivity {
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
 
+        capture =  findViewById(R.id.capture_btn);
+        capture.setOnClickListener(new View.OnClickListener() {
+            @Override
+            @ExperimentalGetImage
+            public void onClick(View v) {
+                if(getState() == State.REALTIME_DETECTION){
+                    analyzer.initializeObjectDetector();
+                    analyzer.setView(boundingBox);
+                    analyzer.setInputResolution(new Size(360,640));
+                    analyzer.setPreviewResolution(new Size(previewView.getWidth(), previewView.getHeight()));
+                    imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(MainActivity.this)
+                        , image -> {
+                        if (getState() == State.REALTIME_DETECTION)
+                            analyzer.analyze(image);
+                    });
+                }
+            }
+        });
+
+        btnHolder = findViewById(R.id.btn_holder);
         boundingBox = findViewById(R.id.boundingBox);
+
         flash = findViewById(R.id.flash_toggle);
         flash.setOnClickListener(v -> {
             if(camera.getCameraInfo().hasFlashUnit()) {
                 if(camera!=null) {
                     if (flashState) {
-                        flashState = false;
-                        camera.getCameraControl().enableTorch(false);
-                        flash.setImageDrawable(ContextCompat.getDrawable(this,R.drawable.ic_round_flash_off));
+                        disableTorch();
                     } else {
-                        flashState = true;
-                        camera.getCameraControl().enableTorch(true);
-                        flash.setImageDrawable(ContextCompat.getDrawable(this,R.drawable.ic_round_flash_on));
+                        enableTorch();
+
                     }
                 }
             }
@@ -179,26 +204,41 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @ExperimentalGetImage
-    private void bindImageAnalysis(@NonNull ProcessCameraProvider cameraProvider) {
-        Preview preview = new Preview.Builder().build();
+    private void enableTorch() {
+        flashState = true;
+        camera.getCameraControl().enableTorch(true);
+        flash.setImageDrawable(ContextCompat.getDrawable(this,R.drawable.ic_round_flash_on));
+    }
+
+    private void disableTorch() {
+        flashState = false;
+        camera.getCameraControl().enableTorch(false);
+        flash.setImageDrawable(ContextCompat.getDrawable(this,R.drawable.ic_round_flash_off));
+    }
+
+    private void buildCameraPreview() {
+        preview = new Preview.Builder().build();
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
-        ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+        imageAnalysis = new ImageAnalysis.Builder()
                 .setTargetResolution(new Size(360,640))
 //                .setTargetResolution(new Size(720,1280))
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
 
-        analyzer.setView(boundingBox);
-        imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this), image -> analyzer.analyze(image));
-
-        CameraSelector cameraSelector = new CameraSelector.Builder()
+        cameraSelector = new CameraSelector.Builder()
                 .requireLensFacing(LENS_FACING_BACK)
                 .build();
 
-        camera = cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis, preview);
+        bindCamera();
+    }
 
+    private void bindCamera(){
+        camera = cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis, preview);
+    }
+
+    private void unbindCamera(){
+        cameraProvider.unbindAll();
     }
 
     private void requestPermission() {
@@ -218,18 +258,35 @@ public class MainActivity extends AppCompatActivity {
                 //load image into fragment
                 //pass image through classifier
                 //load results into bottom modal
+                setState(State.STILL_IMAGE);
+                analyzer.closeDetector();
+                disableTorch();
+                imageAnalysis.clearAnalyzer();
+                unbindCamera();
                 Log.e("TAG", "modeSwitch: FROM STILL IMAGE");
                 break;
             }
             case 1:{
+                setState(State.TAP_TO_DETECT);
+                bindCamera();
+                analyzer.closeDetector();
+                imageAnalysis.clearAnalyzer();
+                capture.setImageDrawable(ContextCompat.getDrawable(MainActivity.this,R.drawable.ic_round_capture_ttd));
+
                 Log.e("TAG", "modeSwitch: TAP TO DETECT");
                 break;
             }
             case 2:{
+                setState(State.REALTIME_DETECTION);
+                bindCamera();
+                capture.setImageDrawable(ContextCompat.getDrawable(MainActivity.this,R.drawable.ic_baseline_capture_realtime));
+
                 Log.e("TAG", "modeSwitch: REALTIME DETECTION");
                 break;
             }
         }
+
+        btnHolder.setVisibility(getState() == State.STILL_IMAGE ? View.INVISIBLE : View.VISIBLE);
     }
 
     private int getScreenWidth() {

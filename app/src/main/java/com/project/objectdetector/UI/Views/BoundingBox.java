@@ -14,6 +14,8 @@ import androidx.core.content.ContextCompat;
 
 import com.project.objectdetector.R;
 
+@SuppressWarnings({"FieldCanBeLocal"
+        , "FieldMayBeLocal"})
 public class BoundingBox extends View {
     private Paint boxPaint;
     private Paint rectPaint;
@@ -22,8 +24,9 @@ public class BoundingBox extends View {
     private RectF rectRect;
     private Typeface poppins;
 
-    private int labelColor = ContextCompat.getColor(getContext(), R.color.theme_primary_dark);
+    private String labelText = "Label";
     private float labelSize = 20f;
+    private int labelColor = ContextCompat.getColor(getContext(), R.color.theme_primary_dark);
 
     public BoundingBox(Context context) {
         this(context, null);
@@ -55,7 +58,13 @@ public class BoundingBox extends View {
 
     public void setBoxRect(RectF rect){
         boxRect = rect;
+        rectRect.set(rect.left+10f, rect.top+14f
+                        , rect.right-10f, rect.top+60f);
         invalidate();
+    }
+
+    public void setLabelText(String text){
+        labelText = text;
     }
 
     private void init(){
@@ -83,11 +92,8 @@ public class BoundingBox extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-//        boxRect.set(0,0,getWidth()/2f,getHeight()/2f);
-//        rectRect.set(20,20,getWidth()/4f,getHeight()/6f);
-
-        canvas.drawRoundRect(boxRect,50f,50f,boxPaint);
-        canvas.drawRoundRect(rectRect,50f,50f,rectPaint);
-        canvas.drawText("LABEL",115,55,textPaint);
+        canvas.drawRoundRect(boxRect,24f,24f,boxPaint);     //bounding box
+//        canvas.drawRoundRect(rectRect,30f,30f,rectPaint);   //label box
+        canvas.drawText(labelText,boxRect.left,boxRect.top-10f,textPaint);  //label text
     }
 }

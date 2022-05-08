@@ -5,6 +5,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.media.Image;
 import android.util.Log;
+import android.util.Size;
 
 import androidx.camera.core.ExperimentalGetImage;
 import androidx.camera.core.ImageAnalysis;
@@ -22,6 +23,7 @@ import java.util.List;
 
 public class FrameAnalyzer implements ImageAnalysis.Analyzer {
     private BoundingBox box;
+    private Size previewRes,inputRes;
     private ObjectDetector objectDetector;
 
     public FrameAnalyzer(){
@@ -40,8 +42,20 @@ public class FrameAnalyzer implements ImageAnalysis.Analyzer {
         objectDetector = ObjectDetection.getClient(options);
     }
 
+    public void closeDetector(){
+        objectDetector.close();
+    }
+
     public void setView(BoundingBox box){
         this.box = box;
+    }
+
+    public void setPreviewResolution(Size res){
+        this.previewRes = res;
+    }
+
+    public void setInputResolution(Size res){
+        this.inputRes = res;
     }
 
     @Override
@@ -58,12 +72,13 @@ public class FrameAnalyzer implements ImageAnalysis.Analyzer {
                 for (DetectedObject detectedObject : detectedObjects) {
                     Rect boundingBox = detectedObject.getBoundingBox();
                     Integer trackingId = detectedObject.getTrackingId();
-                    box.setBoxRect(new RectF(boundingBox));
+                    box.setBoxRect(mapBoxRect(boundingBox));
+
                     for (DetectedObject.Label label : detectedObject.getLabels()) {
                         String text = label.getText();
                         int index = label.getIndex();
                         float confidence = label.getConfidence();
-
+                        box.setLabelText(text);
                         Log.e("TAG", "onSuccess: TEXT : "+text
                                 +" tracking ID "+trackingId+
                                 " index : "+index+
@@ -72,9 +87,26 @@ public class FrameAnalyzer implements ImageAnalysis.Analyzer {
                 }
             }
         })
-        .addOnFailureListener(e -> Log.e("TAG", "analyze: onFailure"))
+        .addOnFailureListener(e -> Log.e("TAG", "analyze: unable to detect"))
         .addOnCompleteListener((result)-> imageProxy.close());
 
+    }
+
+    private RectF mapBoxRect(Rect boundingBox){
+        if(inputRes !=null){
+//            Log.e("TAG", "mapBoxRect: inputres : "+inputRes);
+//            Log.e("TAG", "mapBoxRect: previewres : "+previewRes);
+
+            int w = previewRes.getWidth()/inputRes.getWidth();
+            int h = previewRes.getHeight()/inputRes.getHeight();
+
+            boundingBox.set(boundingBox.left * w,
+                    boundingBox.top * h,
+                    boundingBox.right * w,
+                    boundingBox.bottom * h);
+
+        }
+        return new RectF(boundingBox);
     }
 
 }
