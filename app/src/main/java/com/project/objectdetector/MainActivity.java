@@ -3,6 +3,7 @@ package com.project.objectdetector;
 import static androidx.camera.core.CameraSelector.LENS_FACING_BACK;
 
 import android.Manifest;
+import android.animation.LayoutTransition;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -11,6 +12,7 @@ import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,6 +26,7 @@ import androidx.camera.core.MeteringPointFactory;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
@@ -42,6 +45,7 @@ import java.util.concurrent.ExecutionException;
 public class MainActivity extends AppCompatActivity {
     private static final String[] CAMERA_PERMISSION = new String[]{Manifest.permission.CAMERA};
     private static final int CAMERA_REQUEST_CODE = 10;
+    private ConstraintLayout parent;
 
     private PreviewView previewView;
     private FrameAnalyzer analyzer;
@@ -49,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private BoundingBox boundingBox;
     private ShapeableImageView fps, resolution, flash, capture;
     private LinearLayout btnHolder;
+    private TextView toolTip;
 
     private float pointerX, pointerY;
     private boolean flashState = false;
@@ -60,6 +65,20 @@ public class MainActivity extends AppCompatActivity {
     private CameraSelector cameraSelector;
     private ProcessCameraProvider cameraProvider;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+
+    private Runnable hideToolTip = new Runnable() {
+        @Override
+        public void run() {
+            toolTip.setVisibility(View.GONE);
+        }
+    };
+
+    private Runnable showToolTip = new Runnable() {
+        @Override
+        public void run() {
+            toolTip.setVisibility(View.VISIBLE);
+        }
+    };
 
     private enum State {
         STILL_IMAGE,
@@ -77,10 +96,6 @@ public class MainActivity extends AppCompatActivity {
         this.state = state;
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-    }
 
     @Override
     @ExperimentalGetImage
@@ -89,10 +104,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         new Edge2EdgeLayout(this);
+        parent = findViewById(R.id.parent);
+        parent.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
 
         previewView = findViewById(R.id.previewView);
         picker = findViewById(R.id.horizontal_picker);
-        picker.setValues(new String[] {"Still Image","Tap To Detect", "Realtime"});
+        picker.setValues(new String[]{"Still Image", "Tap To Detect", "Realtime"});
         picker.setSelectedItem(1);
         picker.setOverScrollMode(View.OVER_SCROLL_NEVER);
 
@@ -107,28 +124,29 @@ public class MainActivity extends AppCompatActivity {
             }
         }, ContextCompat.getMainExecutor(this));
 
-        if(!hasCameraPermission()) requestPermission();
+        if (!hasCameraPermission()) requestPermission();
     }
 
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-
-        capture =  findViewById(R.id.capture_btn);
+        toolTip = findViewById(R.id.tooltip);
+        toolTip.postDelayed(hideToolTip, 3500);
+        capture = findViewById(R.id.capture_btn);
         capture.setOnClickListener(new View.OnClickListener() {
             @Override
             @ExperimentalGetImage
             public void onClick(View v) {
-                if(getState() == State.REALTIME_DETECTION){
+                if (getState() == State.REALTIME_DETECTION) {
                     analyzer.initializeObjectDetector();
                     analyzer.setView(boundingBox);
-                    analyzer.setInputResolution(new Size(360,640));
+                    analyzer.setInputResolution(new Size(360, 640));
                     analyzer.setPreviewResolution(new Size(previewView.getWidth(), previewView.getHeight()));
                     imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(MainActivity.this)
-                        , image -> {
-                        if (getState() == State.REALTIME_DETECTION)
-                            analyzer.analyze(image);
-                    });
+                            , image -> {
+                                if (getState() == State.REALTIME_DETECTION)
+                                    analyzer.analyze(image);
+                            });
                 }
             }
         });
@@ -138,8 +156,8 @@ public class MainActivity extends AppCompatActivity {
 
         flash = findViewById(R.id.flash_toggle);
         flash.setOnClickListener(v -> {
-            if(camera.getCameraInfo().hasFlashUnit()) {
-                if(camera!=null) {
+            if (camera.getCameraInfo().hasFlashUnit()) {
+                if (camera != null) {
                     if (flashState) {
                         disableTorch();
                     } else {
@@ -153,22 +171,22 @@ public class MainActivity extends AppCompatActivity {
 
         previewView.setOnTouchListener((v, event) -> {
             int action = event.getActionMasked();
-            switch (action){
-                case MotionEvent.ACTION_DOWN:{
+            switch (action) {
+                case MotionEvent.ACTION_DOWN: {
                     pointerX = event.getX();
                     pointerY = event.getY();
                     return true;
                 }
-                case MotionEvent.ACTION_MOVE:{
+                case MotionEvent.ACTION_MOVE: {
                     /*
                      * SWIPE GESTURES
                      */
-                    if(event.getPointerCount() == 1) {
+                    if (event.getPointerCount() == 1) {
                         if (pointerX - event.getX() > getScreenWidth() / 4f) {
                             Log.e("TAG", "onTouch: FLING RIGHT");
                             gestureDetected = true;
                             pointerX = event.getX();
-                            if(picker.getSelectedItem() >= 0 && picker.getSelectedItem()<picker.getItems()-1) {
+                            if (picker.getSelectedItem() >= 0 && picker.getSelectedItem() < picker.getItems() - 1) {
                                 picker.setSelectedItem(picker.getSelectedItem() + 1);
                                 modeSwitch(picker.getSelectedItem());
                                 return true;
@@ -177,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
                             Log.e("TAG", "onTouch: FLING LEFT");
                             gestureDetected = true;
                             pointerX = event.getX();
-                            if(picker.getSelectedItem() > 0 && picker.getSelectedItem()<picker.getItems()) {
+                            if (picker.getSelectedItem() > 0 && picker.getSelectedItem() < picker.getItems()) {
                                 picker.setSelectedItem(picker.getSelectedItem() - 1);
                                 modeSwitch(picker.getSelectedItem());
                             }
@@ -186,12 +204,12 @@ public class MainActivity extends AppCompatActivity {
                     }
                     break;
                 }
-                case MotionEvent.ACTION_UP:{
+                case MotionEvent.ACTION_UP: {
                     v.performClick();
                     /*
                      * FOCUS
                      */
-                    if(!gestureDetected) {
+                    if (!gestureDetected) {
                         MeteringPointFactory meteringPointFactory = previewView.getMeteringPointFactory();
                         MeteringPoint meteringPoint = meteringPointFactory.createPoint(pointerX, pointerY);
                         FocusMeteringAction focusMeteringAction = new FocusMeteringAction.Builder(meteringPoint).build();
@@ -212,13 +230,13 @@ public class MainActivity extends AppCompatActivity {
     private void enableTorch() {
         flashState = true;
         camera.getCameraControl().enableTorch(true);
-        flash.setImageDrawable(ContextCompat.getDrawable(this,R.drawable.ic_round_flash_on));
+        flash.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_round_flash_on));
     }
 
     private void disableTorch() {
         flashState = false;
         camera.getCameraControl().enableTorch(false);
-        flash.setImageDrawable(ContextCompat.getDrawable(this,R.drawable.ic_round_flash_off));
+        flash.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_round_flash_off));
     }
 
     private void buildCameraPreview() {
@@ -226,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
         imageAnalysis = new ImageAnalysis.Builder()
-                .setTargetResolution(new Size(360,640))
+                .setTargetResolution(new Size(360, 640))
 //                .setTargetResolution(new Size(720,1280))
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
@@ -238,11 +256,11 @@ public class MainActivity extends AppCompatActivity {
         bindCamera();
     }
 
-    private void bindCamera(){
+    private void bindCamera() {
         camera = cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis, preview);
     }
 
-    private void unbindCamera(){
+    private void unbindCamera() {
         cameraProvider.unbindAll();
     }
 
@@ -254,11 +272,12 @@ public class MainActivity extends AppCompatActivity {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
     }
 
-    private void modeSwitch(int index){
+    private void modeSwitch(int index) {
         picker.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP
-                ,HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-        switch (index){
-            case 0:{
+                , HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+        toolTip.post(showToolTip);
+        switch (index) {
+            case 0: {
 //                openImagePicker();
                 //load image into fragment
                 //pass image through classifier
@@ -269,33 +288,58 @@ public class MainActivity extends AppCompatActivity {
                 imageAnalysis.clearAnalyzer();
                 unbindCamera();
                 Log.e("TAG", "modeSwitch: FROM STILL IMAGE");
+                //  capture.setVisibility(View.GONE);
                 break;
             }
-            case 1:{
+            case 1: {
                 setState(State.TAP_TO_DETECT);
                 bindCamera();
                 analyzer.closeDetector();
                 imageAnalysis.clearAnalyzer();
-                capture.setImageDrawable(ContextCompat.getDrawable(MainActivity.this,R.drawable.ic_round_capture_ttd));
+                capture.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_round_capture_ttd));
 
+                setTooltipText("Tap the capture button to start detection");
+                toolTip.postDelayed(hideToolTip, 2500);
                 Log.e("TAG", "modeSwitch: TAP TO DETECT");
+                // capture.setVisibility(View.VISIBLE);
                 break;
             }
-            case 2:{
+            case 2: {
                 setState(State.REALTIME_DETECTION);
                 bindCamera();
-                capture.setImageDrawable(ContextCompat.getDrawable(MainActivity.this,R.drawable.ic_baseline_capture_realtime));
+                capture.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_baseline_capture_realtime));
 
+                setTooltipText("Tap the dot to inspect");
+                toolTip.postDelayed(hideToolTip, 2500);
                 Log.e("TAG", "modeSwitch: REALTIME DETECTION");
+                //capture.setVisibility(View.VISIBLE);
                 break;
             }
         }
 
         btnHolder.setVisibility(getState() == State.STILL_IMAGE ? View.INVISIBLE : View.VISIBLE);
+        capture.setVisibility(getState() == State.STILL_IMAGE ? View.GONE : View.VISIBLE);
+    }
+
+    private void setTooltipText(String s) {
+        toolTip.setText(s);
     }
 
     private int getScreenWidth() {
         return getResources().getDisplayMetrics().widthPixels;
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (flashState) {
+            flashState = false;
+            flash.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_round_flash_off));
+        }
+    }
 }

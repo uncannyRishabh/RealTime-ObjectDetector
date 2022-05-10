@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
+    android:id="@+id/parent"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:animateLayoutChanges="true">
 
     <androidx.camera.view.PreviewView
         android:id="@+id/previewView"
@@ -36,6 +38,7 @@
         android:layout_marginEnd="16dp"
         android:background="@drawable/rounded_corners"
         >
+
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/fps_toggle"
             android:layout_width="44dp"
@@ -46,6 +49,7 @@
             android:background="@color/theme_primary_light"
             android:src="@drawable/ic_launcher_foreground"
             />
+
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/resolution_toggle"
@@ -70,6 +74,21 @@
             android:src="@drawable/ic_round_flash_off"
             />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/tooltip"
+        android:background="@drawable/rounded_tooltip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/capture_btn"
+        android:text="Instructions"
+        android:textSize="14sp"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp"
+        android:visibility="visible"
+        android:layout_marginBottom="30dp"/>
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/capture_btn"
