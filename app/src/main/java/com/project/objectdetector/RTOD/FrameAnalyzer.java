@@ -1,12 +1,13 @@
 package com.project.objectdetector.RTOD;
 
-
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.media.Image;
 import android.util.Log;
 import android.util.Size;
+import android.view.View;
 
+import androidx.annotation.IntRange;
 import androidx.camera.core.ExperimentalGetImage;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
@@ -26,28 +27,45 @@ public class FrameAnalyzer implements ImageAnalysis.Analyzer {
     private Size previewRes,inputRes;
     private ObjectDetector objectDetector;
 
+    public static int CLASSIFY_SINGLE_OBJECT = 0;
+    public static int CLASSIFY_MULTIPLE_OBJECTS = 1;
+
     public FrameAnalyzer(){
-        initializeObjectDetector();
+        initializeObjectDetector(CLASSIFY_SINGLE_OBJECT);
     }
 
-    public void initializeObjectDetector(){
+    public FrameAnalyzer(@IntRange(from = 0, to = 1) int mode){
+        initializeObjectDetector(mode);
+    }
+
+    public void initializeObjectDetector(int mode){
         //TODO: HANDLE CLOSE
-        ObjectDetectorOptions options =
-                new ObjectDetectorOptions.Builder()
-                        .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
-                        .enableClassification()  // Optional
-                        .enableMultipleObjects()
-                        .build();
+        ObjectDetectorOptions options;
+        if(mode == CLASSIFY_SINGLE_OBJECT) {
+            options = new ObjectDetectorOptions.Builder()
+                    .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
+                    .enableClassification()
+                    .enableMultipleObjects()
+                    .build();
+        }
+        else {
+            options = new ObjectDetectorOptions.Builder()
+                    .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
+                    .enableClassification()
+                    .build();
+        }
 
         objectDetector = ObjectDetection.getClient(options);
     }
 
     public void closeDetector(){
+        box.setVisibility(View.GONE);
         objectDetector.close();
     }
 
     public void setView(BoundingBox box){
         this.box = box;
+        box.setVisibility(View.VISIBLE);
     }
 
     public void setPreviewResolution(Size res){

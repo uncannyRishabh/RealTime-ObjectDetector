@@ -117,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
         cameraProviderFuture.addListener(() -> {
             try {
                 cameraProvider = cameraProviderFuture.get();
-                analyzer = new FrameAnalyzer();
+//                analyzer = new FrameAnalyzer();
                 buildCameraPreview();
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
@@ -140,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
             @ExperimentalGetImage
             public void onClick(View v) {
                 if (getState() == State.REALTIME_DETECTION) {
-                    analyzer.initializeObjectDetector();
+                    analyzer = new FrameAnalyzer(FrameAnalyzer.CLASSIFY_MULTIPLE_OBJECTS);
                     analyzer.setView(boundingBox);
                     analyzer.setInputResolution(new Size(360, 640));
                     analyzer.setPreviewResolution(new Size(previewView.getWidth(), previewView.getHeight()));
