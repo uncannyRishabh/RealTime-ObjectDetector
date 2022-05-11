@@ -131,7 +131,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         toolTip = findViewById(R.id.tooltip);
+        setTooltipText("Tap the capture button to start detection");
         toolTip.postDelayed(hideToolTip, 3500);
+
         capture = findViewById(R.id.capture_btn);
         capture.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -273,12 +275,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void modeSwitch(int index) {
-        picker.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP
-                , HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
-        toolTip.post(showToolTip);
+        picker.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP, HapticFeedbackConstants.FLAG_IGNORE_GLOBAL_SETTING);
+        toolTip.removeCallbacks(hideToolTip);
+
         switch (index) {
             case 0: {
-//                openImagePicker();
+                //openImagePicker();
                 //load image into fragment
                 //pass image through classifier
                 //load results into bottom modal
@@ -287,8 +289,8 @@ public class MainActivity extends AppCompatActivity {
                 disableTorch();
                 imageAnalysis.clearAnalyzer();
                 unbindCamera();
+
                 Log.e("TAG", "modeSwitch: FROM STILL IMAGE");
-                //  capture.setVisibility(View.GONE);
                 break;
             }
             case 1: {
@@ -297,26 +299,25 @@ public class MainActivity extends AppCompatActivity {
                 analyzer.closeDetector();
                 imageAnalysis.clearAnalyzer();
                 capture.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_round_capture_ttd));
-
                 setTooltipText("Tap the capture button to start detection");
                 toolTip.postDelayed(hideToolTip, 2500);
+
                 Log.e("TAG", "modeSwitch: TAP TO DETECT");
-                // capture.setVisibility(View.VISIBLE);
                 break;
             }
             case 2: {
                 setState(State.REALTIME_DETECTION);
                 bindCamera();
                 capture.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_baseline_capture_realtime));
-
                 setTooltipText("Tap the dot to inspect");
                 toolTip.postDelayed(hideToolTip, 2500);
+
                 Log.e("TAG", "modeSwitch: REALTIME DETECTION");
-                //capture.setVisibility(View.VISIBLE);
                 break;
             }
         }
 
+        toolTip.post(getState() != State.STILL_IMAGE ? showToolTip : hideToolTip);
         btnHolder.setVisibility(getState() == State.STILL_IMAGE ? View.INVISIBLE : View.VISIBLE);
         capture.setVisibility(getState() == State.STILL_IMAGE ? View.GONE : View.VISIBLE);
     }
@@ -332,6 +333,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        toolTip.post(hideToolTip);
     }
 
     @Override

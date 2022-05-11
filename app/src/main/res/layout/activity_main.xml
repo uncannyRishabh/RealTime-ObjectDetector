@@ -83,7 +83,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@id/capture_btn"
-        android:text="Instructions"
         android:textSize="14sp"
         android:paddingHorizontal="16dp"
         android:paddingVertical="12dp"
