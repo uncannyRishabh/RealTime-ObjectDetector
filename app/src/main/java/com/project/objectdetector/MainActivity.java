@@ -33,7 +33,9 @@ import androidx.core.view.WindowCompat;
 
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions;
 import com.project.objectdetector.RTOD.FrameAnalyzer;
+import com.project.objectdetector.RTOD.ObjectDetectorHelper;
 import com.project.objectdetector.UI.Edge2EdgeLayout;
 import com.project.objectdetector.UI.Views.BoundingBox;
 import com.project.objectdetector.UI.Views.HorizontalPicker;
@@ -140,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
             @ExperimentalGetImage
             public void onClick(View v) {
                 if (getState() == State.REALTIME_DETECTION) {
-                    analyzer = new FrameAnalyzer(FrameAnalyzer.CLASSIFY_MULTIPLE_OBJECTS);
+                    analyzer = new FrameAnalyzer(ObjectDetectorHelper.CLASSIFY_MULTIPLE_OBJECTS, ObjectDetectorOptions.STREAM_MODE);
                     analyzer.setView(boundingBox);
                     analyzer.setInputResolution(new Size(360, 640));
                     analyzer.setPreviewResolution(new Size(previewView.getWidth(), previewView.getHeight()));
@@ -333,6 +335,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        if(getState() == State.REALTIME_DETECTION) analyzer.closeDetector();
         toolTip.post(hideToolTip);
     }
 
