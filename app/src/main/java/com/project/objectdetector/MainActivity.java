@@ -4,6 +4,8 @@ import static androidx.camera.core.CameraSelector.LENS_FACING_BACK;
 
 import android.Manifest;
 import android.animation.LayoutTransition;
+import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -11,9 +13,12 @@ import android.util.Size;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.Camera;
@@ -56,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
     private ShapeableImageView fps, resolution, flash, capture;
     private LinearLayout btnHolder;
     private TextView toolTip;
+    private ImageView previewImage;
 
     private float pointerX, pointerY;
     private boolean flashState = false;
@@ -135,6 +141,7 @@ public class MainActivity extends AppCompatActivity {
         toolTip = findViewById(R.id.tooltip);
         setTooltipText("Tap the capture button to start detection");
         toolTip.postDelayed(hideToolTip, 3500);
+        previewImage=findViewById(R.id.preview_image);
 
         capture = findViewById(R.id.capture_btn);
         capture.setOnClickListener(new View.OnClickListener() {
@@ -282,15 +289,16 @@ public class MainActivity extends AppCompatActivity {
 
         switch (index) {
             case 0: {
-                //openImagePicker();
+
                 //load image into fragment
                 //pass image through classifier
                 //load results into bottom modal
                 setState(State.STILL_IMAGE);
-                analyzer.closeDetector();
+//                analyzer.closeDetector();
                 disableTorch();
                 imageAnalysis.clearAnalyzer();
                 unbindCamera();
+                openImagePicker();
 
                 Log.e("TAG", "modeSwitch: FROM STILL IMAGE");
                 break;
@@ -298,7 +306,7 @@ public class MainActivity extends AppCompatActivity {
             case 1: {
                 setState(State.TAP_TO_DETECT);
                 bindCamera();
-                analyzer.closeDetector();
+//                analyzer.closeDetector();
                 imageAnalysis.clearAnalyzer();
                 capture.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_round_capture_ttd));
                 setTooltipText("Tap the capture button to start detection");
@@ -323,6 +331,23 @@ public class MainActivity extends AppCompatActivity {
         btnHolder.setVisibility(getState() == State.STILL_IMAGE ? View.INVISIBLE : View.VISIBLE);
         capture.setVisibility(getState() == State.STILL_IMAGE ? View.GONE : View.VISIBLE);
     }
+
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK,android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        imagePicker.launch(intent);
+
+    }
+
+    ActivityResultLauncher<Intent> imagePicker = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    Intent data = result.getData();
+                //    Intent passData = new Intent(MainActivity.this,EditActivity.class);
+                    //passData.putExtra("imageUri",data.getDataString());
+//                    startActivity(passData);
+                }
+            });
 
     private void setTooltipText(String s) {
         toolTip.setText(s);

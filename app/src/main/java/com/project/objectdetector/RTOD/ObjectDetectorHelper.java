@@ -75,7 +75,8 @@ public class ObjectDetectorHelper {
 
     public void closeDetector(){
         box.setVisibility(View.GONE);
-        objectDetector.close();
+        if(objectDetector != null)
+         objectDetector.close();
     }
 
     public void setView(BoundingBox box){
