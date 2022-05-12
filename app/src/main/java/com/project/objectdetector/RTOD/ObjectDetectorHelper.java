@@ -54,14 +54,14 @@ public class ObjectDetectorHelper {
         ObjectDetectorOptions options;
         if(detectionMode == CLASSIFY_SINGLE_OBJECT) {
             options = new ObjectDetectorOptions.Builder()
-                    .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
+                    .setDetectorMode(detectorMode)
                     .enableClassification()
                     .enableMultipleObjects()
                     .build();
         }
         else {
             options = new ObjectDetectorOptions.Builder()
-                    .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
+                    .setDetectorMode(detectorMode)
                     .enableClassification()
                     .build();
         }
@@ -75,7 +75,6 @@ public class ObjectDetectorHelper {
 
     public void closeDetector(){
         box.setVisibility(View.GONE);
-        if(objectDetector != null)
          objectDetector.close();
     }
 

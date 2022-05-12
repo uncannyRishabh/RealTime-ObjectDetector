@@ -7,7 +7,13 @@ import android.animation.LayoutTransition;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
 import android.view.HapticFeedbackConstants;
@@ -20,6 +26,7 @@ import android.widget.TextView;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
@@ -44,8 +51,16 @@ import com.project.objectdetector.RTOD.ObjectDetectorHelper;
 import com.project.objectdetector.UI.Edge2EdgeLayout;
 import com.project.objectdetector.UI.Views.BoundingBox;
 import com.project.objectdetector.UI.Views.HorizontalPicker;
+import com.project.objectdetector.Utils.BitmapUtils;
+import com.project.objectdetector.Utils.SerialExecutor;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 
 @SuppressWarnings({"FieldCanBeLocal"
         , "FieldMayBeLocal"})
@@ -73,6 +88,11 @@ public class MainActivity extends AppCompatActivity {
     private CameraSelector cameraSelector;
     private ProcessCameraProvider cameraProvider;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
+
+//    private Handler handler = new Handler();
+//    private HandlerThread handler = new HandlerThread();
+
+//    private SerialExecutor s1 = new SerialExecutor(getMainExecutor());
 
     private Runnable hideToolTip = new Runnable() {
         @Override
@@ -289,12 +309,11 @@ public class MainActivity extends AppCompatActivity {
 
         switch (index) {
             case 0: {
-
-                //load image into fragment
                 //pass image through classifier
                 //load results into bottom modal
+
                 setState(State.STILL_IMAGE);
-//                analyzer.closeDetector();
+                if(analyzer!=null) analyzer.closeDetector();
                 disableTorch();
                 imageAnalysis.clearAnalyzer();
                 unbindCamera();
@@ -306,7 +325,7 @@ public class MainActivity extends AppCompatActivity {
             case 1: {
                 setState(State.TAP_TO_DETECT);
                 bindCamera();
-//                analyzer.closeDetector();
+                if(analyzer!=null) analyzer.closeDetector();
                 imageAnalysis.clearAnalyzer();
                 capture.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_round_capture_ttd));
                 setTooltipText("Tap the capture button to start detection");
@@ -338,14 +357,37 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private Bitmap bitmap,compressedBmp;
+    private BitmapUtils bmpUtil;
     ActivityResultLauncher<Intent> imagePicker = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 if (result.getResultCode() == Activity.RESULT_OK) {
                     Intent data = result.getData();
-                //    Intent passData = new Intent(MainActivity.this,EditActivity.class);
-                    //passData.putExtra("imageUri",data.getDataString());
-//                    startActivity(passData);
+
+                    if(data != null) {
+                        try {
+                            bitmap = MediaStore.Images.Media.getBitmap(getContentResolver() , Uri.parse(data.getDataString()));
+                            Log.e("TAG", "onPostCreate: data: "+data+" parsedData : "+Uri.parse(data.getDataString()));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        if(bitmap.getWidth() > 3000){   //condition for applying compression
+//                            bmpUtil = new BitmapUtils();
+//                            Completable.fromRunnable(() -> compressedBmp = bmpUtil.compressBitmap(data.getDataString()))
+//                                    .subscribeOn(Schedulers.io())
+//                                    .observeOn(AndroidSchedulers.mainThread())
+//                                    .andThen(Completable.fromRunnable(() -> previewImage.setImageBitmap(compressedBmp)));
+//                            compressedBmp = bmpUtil.compressBitmap(data.getDataString());
+                            previewImage.setImageBitmap(bitmap);
+
+                            Log.e("TAG", "LOAD COMPRESSED BMP");
+                        }
+                        else
+                            previewImage.setImageBitmap(bitmap);
+                    }
+
                 }
             });
 

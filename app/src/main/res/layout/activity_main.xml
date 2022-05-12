@@ -25,7 +25,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:scaleType="center"
+        android:scaleType="fitCenter"
         />
     <com.project.objectdetector.UI.Views.BoundingBox
         android:id="@+id/boundingBox"
