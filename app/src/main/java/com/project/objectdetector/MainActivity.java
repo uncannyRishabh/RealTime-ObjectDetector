@@ -82,17 +82,15 @@ public class MainActivity extends AppCompatActivity {
     private boolean flashState = false;
     private boolean gestureDetected = false;
 
+    private BitmapUtils bmpUtil;
+    private Bitmap bitmap,compressedBmp;
+
     private Camera camera;
     private Preview preview;
     private ImageAnalysis imageAnalysis;
     private CameraSelector cameraSelector;
     private ProcessCameraProvider cameraProvider;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
-
-//    private Handler handler = new Handler();
-//    private HandlerThread handler = new HandlerThread();
-
-//    private SerialExecutor s1 = new SerialExecutor(getMainExecutor());
 
     private Runnable hideToolTip = new Runnable() {
         @Override
@@ -357,8 +355,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private Bitmap bitmap,compressedBmp;
-    private BitmapUtils bmpUtil;
     ActivityResultLauncher<Intent> imagePicker = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -373,14 +369,12 @@ public class MainActivity extends AppCompatActivity {
                             e.printStackTrace();
                         }
 
-                        if(bitmap.getWidth() > 3000){   //condition for applying compression
-//                            bmpUtil = new BitmapUtils();
-//                            Completable.fromRunnable(() -> compressedBmp = bmpUtil.compressBitmap(data.getDataString()))
-//                                    .subscribeOn(Schedulers.io())
-//                                    .observeOn(AndroidSchedulers.mainThread())
-//                                    .andThen(Completable.fromRunnable(() -> previewImage.setImageBitmap(compressedBmp)));
-//                            compressedBmp = bmpUtil.compressBitmap(data.getDataString());
-                            previewImage.setImageBitmap(bitmap);
+                        if(bitmap.getWidth() > 3000){       //condition for applying compression
+                            bmpUtil = new BitmapUtils();
+                            Completable.fromRunnable(() -> compressedBmp = bmpUtil.compressBitmap(data.getDataString()))
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .andThen(Completable.fromRunnable(() -> previewImage.setImageBitmap(compressedBmp)));
 
                             Log.e("TAG", "LOAD COMPRESSED BMP");
                         }
