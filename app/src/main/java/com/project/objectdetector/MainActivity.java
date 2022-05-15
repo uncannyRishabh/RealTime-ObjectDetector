@@ -106,6 +106,20 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    private Runnable hideImageView = new Runnable() {
+        @Override
+        public void run() {
+            previewImage.setVisibility(View.GONE);
+        }
+    };
+
+    private Runnable showImageView = new Runnable() {
+        @Override
+        public void run() {
+            previewImage.setVisibility(View.VISIBLE);
+        }
+    };
+
     private enum State {
         STILL_IMAGE,
         TAP_TO_DETECT,
@@ -344,6 +358,8 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        previewImage.post(getState() != State.STILL_IMAGE? hideImageView: showImageView);
+
         toolTip.post(getState() != State.STILL_IMAGE ? showToolTip : hideToolTip);
         btnHolder.setVisibility(getState() == State.STILL_IMAGE ? View.INVISIBLE : View.VISIBLE);
         capture.setVisibility(getState() == State.STILL_IMAGE ? View.GONE : View.VISIBLE);
@@ -371,6 +387,7 @@ public class MainActivity extends AppCompatActivity {
 
                         if(bitmap.getWidth() > 3000){       //condition for applying compression
                             bmpUtil = new BitmapUtils();
+
                             Completable.fromRunnable(() -> compressedBmp = bmpUtil.compressBitmap(data.getDataString()))
                                     .subscribeOn(Schedulers.io())
                                     .observeOn(AndroidSchedulers.mainThread())
