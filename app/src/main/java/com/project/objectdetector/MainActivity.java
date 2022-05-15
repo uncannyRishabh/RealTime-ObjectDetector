@@ -82,17 +82,15 @@ public class MainActivity extends AppCompatActivity {
     private boolean flashState = false;
     private boolean gestureDetected = false;
 
+    private BitmapUtils bmpUtil;
+    private Bitmap bitmap,compressedBmp;
+
     private Camera camera;
     private Preview preview;
     private ImageAnalysis imageAnalysis;
     private CameraSelector cameraSelector;
     private ProcessCameraProvider cameraProvider;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
-
-//    private Handler handler = new Handler();
-//    private HandlerThread handler = new HandlerThread();
-
-//    private SerialExecutor s1 = new SerialExecutor(getMainExecutor());
 
     private Runnable hideToolTip = new Runnable() {
         @Override
@@ -105,6 +103,20 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             toolTip.setVisibility(View.VISIBLE);
+        }
+    };
+
+    private Runnable hideImageView = new Runnable() {
+        @Override
+        public void run() {
+            previewImage.setVisibility(View.GONE);
+        }
+    };
+
+    private Runnable showImageView = new Runnable() {
+        @Override
+        public void run() {
+            previewImage.setVisibility(View.VISIBLE);
         }
     };
 
@@ -346,6 +358,8 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        previewImage.post(getState() != State.STILL_IMAGE? hideImageView: showImageView);
+
         toolTip.post(getState() != State.STILL_IMAGE ? showToolTip : hideToolTip);
         btnHolder.setVisibility(getState() == State.STILL_IMAGE ? View.INVISIBLE : View.VISIBLE);
         capture.setVisibility(getState() == State.STILL_IMAGE ? View.GONE : View.VISIBLE);
@@ -357,8 +371,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private Bitmap bitmap,compressedBmp;
-    private BitmapUtils bmpUtil;
     ActivityResultLauncher<Intent> imagePicker = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -373,14 +385,13 @@ public class MainActivity extends AppCompatActivity {
                             e.printStackTrace();
                         }
 
-                        if(bitmap.getWidth() > 3000){   //condition for applying compression
-//                            bmpUtil = new BitmapUtils();
-//                            Completable.fromRunnable(() -> compressedBmp = bmpUtil.compressBitmap(data.getDataString()))
-//                                    .subscribeOn(Schedulers.io())
-//                                    .observeOn(AndroidSchedulers.mainThread())
-//                                    .andThen(Completable.fromRunnable(() -> previewImage.setImageBitmap(compressedBmp)));
-//                            compressedBmp = bmpUtil.compressBitmap(data.getDataString());
-                            previewImage.setImageBitmap(bitmap);
+                        if(bitmap.getWidth() > 3000){       //condition for applying compression
+                            bmpUtil = new BitmapUtils();
+
+                            Completable.fromRunnable(() -> compressedBmp = bmpUtil.compressBitmap(data.getDataString()))
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .andThen(Completable.fromRunnable(() -> previewImage.setImageBitmap(compressedBmp)));
 
                             Log.e("TAG", "LOAD COMPRESSED BMP");
                         }
