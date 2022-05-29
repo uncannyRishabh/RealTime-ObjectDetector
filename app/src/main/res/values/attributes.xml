@@ -14,7 +14,17 @@
 
     </declare-styleable>
 
+    <attr name="boundingBoxStyle" format="reference"/>
+
     <declare-styleable name="BoundingBox">
+        <attr name="android:textColor"/>
+        <attr name="android:textSize"/>
+        <attr name="fontFamily"/>
+    </declare-styleable>
+
+    <attr name="temperatureMonitorStyle" format="reference"/>
+
+    <declare-styleable name="TemperatureMonitor">
         <attr name="android:textColor"/>
         <attr name="android:textSize"/>
         <attr name="fontFamily"/>

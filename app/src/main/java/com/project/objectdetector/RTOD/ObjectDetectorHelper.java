@@ -52,17 +52,18 @@ public class ObjectDetectorHelper {
     public void initializeObjectDetector(@IntRange(from = 0, to = 1) int detectionMode,int detectorMode){
         //TODO: HANDLE CLOSE
         ObjectDetectorOptions options;
+
         if(detectionMode == CLASSIFY_SINGLE_OBJECT) {
             options = new ObjectDetectorOptions.Builder()
                     .setDetectorMode(detectorMode)
                     .enableClassification()
-                    .enableMultipleObjects()
                     .build();
         }
         else {
             options = new ObjectDetectorOptions.Builder()
                     .setDetectorMode(detectorMode)
                     .enableClassification()
+                    .enableMultipleObjects()
                     .build();
         }
 

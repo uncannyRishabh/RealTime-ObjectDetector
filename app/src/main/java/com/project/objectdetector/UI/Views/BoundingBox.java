@@ -12,12 +12,15 @@ import android.util.Log;
 import android.util.Size;
 import android.view.View;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
 import com.google.mlkit.vision.objects.DetectedObject;
 import com.project.objectdetector.R;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings({"FieldCanBeLocal"
@@ -29,6 +32,7 @@ public class BoundingBox extends View {
     private RectF boxRect;
     private RectF rectRect;
     private Typeface poppins;
+    private final Canvas canvas = new Canvas();
 
     private boolean objectDetected = false;
     private Size previewRes,inputRes;
@@ -45,7 +49,7 @@ public class BoundingBox extends View {
     }
 
     public BoundingBox(Context context, @Nullable AttributeSet attrs) {
-        this(context, attrs, R.attr.horizontalPickerStyle);
+        this(context, attrs, R.attr.boundingBoxStyle);
     }
 
     public BoundingBox(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
@@ -71,7 +75,7 @@ public class BoundingBox extends View {
         boxRect = rect;
         rectRect.set(rect.left+10f, rect.top+14f
                         , rect.right-10f, rect.top+60f);
-        invalidate();
+        postInvalidate();
     }
 
     public void setLabelText(String text){
@@ -88,22 +92,23 @@ public class BoundingBox extends View {
 
     public void setDetectedObjects(List<DetectedObject> detectedObjects) {
         this.detectedObjects = detectedObjects;
-        for (DetectedObject detectedObject : detectedObjects) {
-            Rect boundingBox = detectedObject.getBoundingBox();
-            Integer trackingId = detectedObject.getTrackingId();
-            setBoxRect(mapBoxRect(boundingBox));
-            for (DetectedObject.Label label : detectedObject.getLabels()) {
-                String text = label.getText();
-                int index = label.getIndex();
-                float confidence = label.getConfidence();
-                setLabelText(text);
-                Log.e("TAG", "onSuccess: TEXT : "+text
-                        +" tracking ID "+trackingId+
-                        " index : "+index+
-                        " confidence + "+confidence);
-            }
-        }
+        invalidate();
+//        for (DetectedObject detectedObject : detectedObjects) {
+//            Rect boundingBox = detectedObject.getBoundingBox();
+//            Integer trackingId = detectedObject.getTrackingId();
+//            setBoxRect(mapBoxRect(boundingBox));
 
+//            for (DetectedObject.Label label : detectedObject.getLabels()) {
+//                String text = label.getText();
+//                int index = label.getIndex();
+//                float confidence = label.getConfidence();
+//                setLabelText(text);
+//                Log.e("TAG", "onSuccess: TEXT : "+text
+//                        +" tracking ID "+trackingId+
+//                        " index : "+index+
+//                        " confidence + "+confidence);
+//            }
+//        }
     }
 
     private void init(){
@@ -133,15 +138,35 @@ public class BoundingBox extends View {
         canvas.drawText(labelText, boxRect.left, boxRect.top - 10f, textPaint);  //label text
     }
 
+    private void spawnBoxes(Canvas canvas,RectF rect){
+        canvas.drawRoundRect(rect, 24f, 24f, boxPaint);
+    }
+
+    @Override
+    protected void onVisibilityChanged(@NonNull View changedView, int visibility) {
+        if(visibility == View.GONE){
+            Log.e("TAG", "onVisibilityChanged: ");
+            this.draw(canvas);
+        }
+        super.onVisibilityChanged(changedView, visibility);
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        canvas.save();
+
+        if(detectedObjects != null) {
+            for (DetectedObject object : detectedObjects) {
+                Log.e("TAG", "onSuccess: tracking ID "+object.getTrackingId());
+                spawnBoxes(canvas, mapBoxRect(object.getBoundingBox()));
+            }
+        }
+
         if (detectedObjects == null) {
             Log.e("TAG", "onDraw: detectedObjects == null");
             boxRect.set(0, 0, 0, 0);
         }
-        drawOverlay(canvas);
+//        drawOverlay(canvas);
 
     }
 

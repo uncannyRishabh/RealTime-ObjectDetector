@@ -9,10 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.util.Size;
@@ -26,7 +23,6 @@ import android.widget.TextView;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
@@ -52,11 +48,9 @@ import com.project.objectdetector.UI.Edge2EdgeLayout;
 import com.project.objectdetector.UI.Views.BoundingBox;
 import com.project.objectdetector.UI.Views.HorizontalPicker;
 import com.project.objectdetector.Utils.BitmapUtils;
-import com.project.objectdetector.Utils.SerialExecutor;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Completable;
@@ -92,28 +86,29 @@ public class MainActivity extends AppCompatActivity {
     private ProcessCameraProvider cameraProvider;
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
 
-    private Runnable hideToolTip = new Runnable() {
+    private final Runnable hideToolTip = new Runnable() {
         @Override
         public void run() {
             toolTip.setVisibility(View.GONE);
         }
     };
 
-    private Runnable showToolTip = new Runnable() {
+    private final Runnable showToolTip = new Runnable() {
         @Override
         public void run() {
             toolTip.setVisibility(View.VISIBLE);
         }
     };
 
-    private Runnable hideImageView = new Runnable() {
+    private final Runnable hideImageView = new Runnable() {
         @Override
         public void run() {
             previewImage.setVisibility(View.GONE);
+            previewImage.setImageDrawable(null);
         }
     };
 
-    private Runnable showImageView = new Runnable() {
+    private final Runnable showImageView = new Runnable() {
         @Override
         public void run() {
             previewImage.setVisibility(View.VISIBLE);
@@ -157,7 +152,6 @@ public class MainActivity extends AppCompatActivity {
         cameraProviderFuture.addListener(() -> {
             try {
                 cameraProvider = cameraProviderFuture.get();
-//                analyzer = new FrameAnalyzer();
                 buildCameraPreview();
             } catch (ExecutionException | InterruptedException e) {
                 e.printStackTrace();
@@ -358,8 +352,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        previewImage.post(getState() != State.STILL_IMAGE? hideImageView: showImageView);
-
+        previewImage.post(getState() != State.STILL_IMAGE ? hideImageView : showImageView);
         toolTip.post(getState() != State.STILL_IMAGE ? showToolTip : hideToolTip);
         btnHolder.setVisibility(getState() == State.STILL_IMAGE ? View.INVISIBLE : View.VISIBLE);
         capture.setVisibility(getState() == State.STILL_IMAGE ? View.GONE : View.VISIBLE);

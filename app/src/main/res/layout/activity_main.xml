@@ -17,6 +17,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         />
+
     <ImageView
         android:id="@+id/preview_image"
         android:layout_width="match_parent"
@@ -27,6 +28,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:scaleType="fitCenter"
         />
+
     <com.project.objectdetector.UI.Views.BoundingBox
         android:id="@+id/boundingBox"
         android:layout_width="match_parent"
@@ -34,6 +36,17 @@
         android:textColor="@color/theme_primary_dark"
         android:textSize="14.5dp"
 
+        />
+
+    <com.project.objectdetector.UI.Views.TemperatureMonitor
+        android:layout_width="80dp"
+        android:layout_height="36dp"
+        android:layout_marginTop="40dp"
+        android:layout_marginStart="28dp"
+        android:textSize="16dp"
+        android:textColor="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         />
 
     <LinearLayout
