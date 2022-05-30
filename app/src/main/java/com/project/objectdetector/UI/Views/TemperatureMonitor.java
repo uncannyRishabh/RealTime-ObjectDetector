@@ -8,6 +8,7 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.os.BatteryManager;
 import android.util.AttributeSet;
@@ -20,8 +21,10 @@ import com.project.objectdetector.R;
 
 @SuppressWarnings({"FieldCanBeLocal","FieldMayBeFinal"})
 public class TemperatureMonitor extends View {
-    private Paint tPaint;
     private Rect tRect;
+    private RectF bRect;
+    private Paint tPaint;
+    private Paint bPaint;
     private Typeface poppins;
     private int tColor = 0xFF000000;
     private float tSize = 20f;
@@ -63,7 +66,7 @@ public class TemperatureMonitor extends View {
                 float temp = (float) (intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0)) / 10;
                 if(temp != temperature) {
                     temperature = temp;
-                    setText(temperature + "" + (char) 0x00B0 + "C");
+                    setText(temperature + "" + (char) 0x00B0 + " C");
                 }
             }
         };
@@ -72,15 +75,21 @@ public class TemperatureMonitor extends View {
     }
 
     private void init() {
-        tPaint = new Paint();
         tRect = new Rect();
+        bRect = new RectF();
+        tPaint = new Paint();
+        bPaint = new Paint();
 
         poppins = Typeface.create("Poppins", Typeface.NORMAL);
         tPaint.setColor(tColor);
         tPaint.setTypeface(poppins);
         tPaint.setTextSize(tSize);
 
-        tPaint.getTextBounds("00.0* F", 0, 7, tRect);
+        tPaint.getTextBounds("00.0° C", 0, 7, tRect);
+
+        bPaint.setStyle(Paint.Style.FILL);
+        bPaint.setColor(0x40000000);
+
     }
 
     private void setText(String tString){
@@ -92,7 +101,10 @@ public class TemperatureMonitor extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        canvas.drawColor(0x80000000);
+
+        bRect.set(0,0,getWidth(),getHeight());
+        canvas.drawRoundRect(bRect, 48f,48f,bPaint);
+
         canvas.drawText(tString,
                 (getWidth()-tRect.right)/2f,
                 (getHeight()-tRect.top)/2f,

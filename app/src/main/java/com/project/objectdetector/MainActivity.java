@@ -373,20 +373,22 @@ public class MainActivity extends AppCompatActivity {
                     if(data != null) {
                         try {
                             bitmap = MediaStore.Images.Media.getBitmap(getContentResolver() , Uri.parse(data.getDataString()));
-                            Log.e("TAG", "onPostCreate: data: "+data+" parsedData : "+Uri.parse(data.getDataString()));
+                            Log.e("TAG", "ActivityResultLauncher: data: "+data.getDataString()+"\n parsedData : "+Uri.parse(data.getDataString()));
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
 
-                        if(bitmap.getWidth() > 3000){       //condition for applying compression
+                        if(bitmap.getWidth() > 1080){       //condition for applying compression
                             bmpUtil = new BitmapUtils();
-
-                            Completable.fromRunnable(() -> compressedBmp = bmpUtil.compressBitmap(data.getDataString()))
-                                    .subscribeOn(Schedulers.io())
-                                    .observeOn(AndroidSchedulers.mainThread())
-                                    .andThen(Completable.fromRunnable(() -> previewImage.setImageBitmap(compressedBmp)));
-
-                            Log.e("TAG", "LOAD COMPRESSED BMP");
+                            Completable.fromRunnable(() -> compressedBmp = bmpUtil.compressBitmap(bitmap))
+                                .subscribeOn(Schedulers.computation())
+                                .andThen(Completable.fromRunnable(() -> {
+                                            previewImage.setImageBitmap(compressedBmp);
+                                            bitmap.recycle();
+                                        })
+                                        .subscribeOn(AndroidSchedulers.mainThread()))
+                                .doOnError((e) -> Log.e("onError", "ActivityResultLauncher: "+e))
+                                .subscribe();
                         }
                         else
                             previewImage.setImageBitmap(bitmap);
