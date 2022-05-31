@@ -42,7 +42,7 @@
         android:layout_width="84dp"
         android:layout_height="36dp"
         android:layout_marginTop="58dp"
-        android:layout_marginStart="28dp"
+        android:layout_marginStart="22dp"
         android:textSize="15dp"
         android:textColor="@color/white"
         app:layout_constraintStart_toStartOf="parent"

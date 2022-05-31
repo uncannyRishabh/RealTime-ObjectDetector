@@ -19,8 +19,6 @@ import androidx.core.content.ContextCompat;
 import com.google.mlkit.vision.objects.DetectedObject;
 import com.project.objectdetector.R;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 @SuppressWarnings({"FieldCanBeLocal"
@@ -30,14 +28,11 @@ public class BoundingBox extends View {
     private Paint rectPaint;
     private Paint textPaint;
     private RectF boxRect;
-    private RectF rectRect;
     private Typeface poppins;
     private final Canvas canvas = new Canvas();
 
-    private boolean objectDetected = false;
     private Size previewRes,inputRes;
 
-    private String labelText = "Label";
     private float labelSize = 20f;
     private int labelColor = ContextCompat.getColor(getContext(), R.color.theme_primary_dark);
 
@@ -71,17 +66,6 @@ public class BoundingBox extends View {
 
     }
 
-    public void setBoxRect(RectF rect){
-        boxRect = rect;
-        rectRect.set(rect.left+10f, rect.top+14f
-                        , rect.right-10f, rect.top+60f);
-        postInvalidate();
-    }
-
-    public void setLabelText(String text){
-        labelText = text;
-    }
-
     public void setPreviewResolution(Size res){
         this.previewRes = res;
     }
@@ -93,22 +77,6 @@ public class BoundingBox extends View {
     public void setDetectedObjects(List<DetectedObject> detectedObjects) {
         this.detectedObjects = detectedObjects;
         invalidate();
-//        for (DetectedObject detectedObject : detectedObjects) {
-//            Rect boundingBox = detectedObject.getBoundingBox();
-//            Integer trackingId = detectedObject.getTrackingId();
-//            setBoxRect(mapBoxRect(boundingBox));
-
-//            for (DetectedObject.Label label : detectedObject.getLabels()) {
-//                String text = label.getText();
-//                int index = label.getIndex();
-//                float confidence = label.getConfidence();
-//                setLabelText(text);
-//                Log.e("TAG", "onSuccess: TEXT : "+text
-//                        +" tracking ID "+trackingId+
-//                        " index : "+index+
-//                        " confidence + "+confidence);
-//            }
-//        }
     }
 
     private void init(){
@@ -116,7 +84,8 @@ public class BoundingBox extends View {
         rectPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         boxRect = new RectF();
-        rectRect = new RectF();
+
+//        screenHeight = getResources().getDisplayMetrics().heightPixels;
 
         boxPaint.setColor(ContextCompat.getColor(getContext(), R.color.theme_primary_dark));
         boxPaint.setStyle(Paint.Style.STROKE);
@@ -130,12 +99,6 @@ public class BoundingBox extends View {
         textPaint.setColor(labelColor);
         textPaint.setTextSize(labelSize);
         textPaint.setTypeface(poppins);
-    }
-
-    private void drawOverlay(Canvas canvas){
-        canvas.drawRoundRect(boxRect, 24f, 24f, boxPaint);     //bounding box
-//            canvas.drawRoundRect(rectRect,30f,30f,rectPaint);   //label box
-        canvas.drawText(labelText, boxRect.left, boxRect.top - 10f, textPaint);  //label text
     }
 
     private void spawnBoxes(Canvas canvas,RectF rect){
@@ -166,25 +129,31 @@ public class BoundingBox extends View {
             Log.e("TAG", "onDraw: detectedObjects == null");
             boxRect.set(0, 0, 0, 0);
         }
-//        drawOverlay(canvas);
 
     }
 
     public RectF mapBoxRect(Rect boundingBox){
+        float w;
+        float h;
         if(inputRes !=null){
-//            Log.e("TAG", "mapBoxRect: inputres : "+inputRes);
-//            Log.e("TAG", "mapBoxRect: previewres : "+previewRes);
+            h = previewRes.getHeight()/(float) inputRes.getWidth();
+            w = previewRes.getWidth()/(float) inputRes.getHeight();
 
-            int w = previewRes.getWidth()/inputRes.getWidth();
-            int h = previewRes.getHeight()/inputRes.getHeight();
-
-            boundingBox.set(boundingBox.left * w,
+            boxRect.set(boundingBox.left * w,
                     boundingBox.top * h,
                     boundingBox.right * w,
                     boundingBox.bottom * h);
+//            Log.e("TAG", "mapBoxRect: inputres : "+inputRes);
+//            Log.e("TAG", "mapBoxRect: previewres : "+previewRes);
+//            Log.e("TAG", "mapBoxRect: boundingBox :"+boundingBox);
+//            Log.e("TAG", "mapBoxRect: w :"+w+" h : "+h);
 
+//            Log.e("TAG", "mapBoxRect: boundingBox :"+new RectF(boundingBox.left * w,
+//                    boundingBox.top * h,
+//                    boundingBox.right * w,
+//                    boundingBox.bottom * h));
         }
-        return new RectF(boundingBox);
+        return boxRect;
     }
 
 }

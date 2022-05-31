@@ -50,6 +50,7 @@ import com.project.objectdetector.UI.Views.HorizontalPicker;
 import com.project.objectdetector.Utils.BitmapUtils;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
@@ -59,7 +60,8 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 @SuppressWarnings({"FieldCanBeLocal"
         , "FieldMayBeLocal"})
 public class MainActivity extends AppCompatActivity {
-    private static final String[] CAMERA_PERMISSION = new String[]{Manifest.permission.CAMERA};
+    private static final String[] CAMERA_PERMISSION = new String[]{Manifest.permission.CAMERA
+            , Manifest.permission.READ_EXTERNAL_STORAGE };
     private static final int CAMERA_REQUEST_CODE = 10;
     private ConstraintLayout parent;
 
@@ -165,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
         toolTip = findViewById(R.id.tooltip);
-        setTooltipText("Tap the capture button to start detection");
+        setTooltipText("Tap to capture image");
         toolTip.postDelayed(hideToolTip, 3500);
         previewImage=findViewById(R.id.preview_image);
 
@@ -175,9 +177,10 @@ public class MainActivity extends AppCompatActivity {
             @ExperimentalGetImage
             public void onClick(View v) {
                 if (getState() == State.REALTIME_DETECTION) {
+                    // TODO : ADD APPROPRIATE DIALOGUE
                     analyzer = new FrameAnalyzer(ObjectDetectorHelper.CLASSIFY_MULTIPLE_OBJECTS, ObjectDetectorOptions.STREAM_MODE);
                     analyzer.setView(boundingBox);
-                    analyzer.setInputResolution(new Size(360, 640));
+                    analyzer.setInputResolution(Objects.requireNonNull(imageAnalysis.getResolutionInfo()).getResolution());
                     analyzer.setPreviewResolution(new Size(previewView.getWidth(), previewView.getHeight()));
                     imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(MainActivity.this)
                             , image -> {
@@ -219,7 +222,7 @@ public class MainActivity extends AppCompatActivity {
                      * SWIPE GESTURES
                      */
                     if (event.getPointerCount() == 1) {
-                        if (pointerX - event.getX() > getScreenWidth() / 4f) {
+                        if (pointerX - event.getX() > getScreenWidth() / 3f) {
                             Log.e("TAG", "onTouch: FLING RIGHT");
                             gestureDetected = true;
                             pointerX = event.getX();
@@ -228,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
                                 modeSwitch(picker.getSelectedItem());
                                 return true;
                             }
-                        } else if (pointerX - event.getX() < -getScreenWidth() / 4f) {
+                        } else if (pointerX - event.getX() < -getScreenWidth() / 3f) {
                             Log.e("TAG", "onTouch: FLING LEFT");
                             gestureDetected = true;
                             pointerX = event.getX();
@@ -315,9 +318,6 @@ public class MainActivity extends AppCompatActivity {
 
         switch (index) {
             case 0: {
-                //pass image through classifier
-                //load results into bottom modal
-
                 setState(State.STILL_IMAGE);
                 if(analyzer!=null) analyzer.closeDetector();
                 disableTorch();
@@ -334,7 +334,7 @@ public class MainActivity extends AppCompatActivity {
                 if(analyzer!=null) analyzer.closeDetector();
                 imageAnalysis.clearAnalyzer();
                 capture.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_round_capture_ttd));
-                setTooltipText("Tap the capture button to start detection");
+                setTooltipText("Tap to capture image");
                 toolTip.postDelayed(hideToolTip, 2500);
 
                 Log.e("TAG", "modeSwitch: TAP TO DETECT");
@@ -344,7 +344,7 @@ public class MainActivity extends AppCompatActivity {
                 setState(State.REALTIME_DETECTION);
                 bindCamera();
                 capture.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_baseline_capture_realtime));
-                setTooltipText("Tap the dot to inspect");
+                setTooltipText("Tap the capture button to begin detection");
                 toolTip.postDelayed(hideToolTip, 2500);
 
                 Log.e("TAG", "modeSwitch: REALTIME DETECTION");
@@ -380,13 +380,21 @@ public class MainActivity extends AppCompatActivity {
 
                         if(bitmap.getWidth() > 1080){       //condition for applying compression
                             bmpUtil = new BitmapUtils();
+                            Completable c1 = Completable.fromRunnable(() -> {
+                                        previewImage.setImageBitmap(compressedBmp);
+                                        bitmap.recycle();
+                            }).subscribeOn(AndroidSchedulers.mainThread());
+
+                            Completable c2 = Completable.fromRunnable(() -> {
+                                ObjectDetectorHelper odh = new ObjectDetectorHelper(ObjectDetectorHelper.CLASSIFY_MULTIPLE_OBJECTS
+                                        ,ObjectDetectorOptions.SINGLE_IMAGE_MODE);
+
+                            });
+
                             Completable.fromRunnable(() -> compressedBmp = bmpUtil.compressBitmap(bitmap))
                                 .subscribeOn(Schedulers.computation())
-                                .andThen(Completable.fromRunnable(() -> {
-                                            previewImage.setImageBitmap(compressedBmp);
-                                            bitmap.recycle();
-                                        })
-                                        .subscribeOn(AndroidSchedulers.mainThread()))
+                                .andThen(c1)
+                                .andThen(c2)
                                 .doOnError((e) -> Log.e("onError", "ActivityResultLauncher: "+e))
                                 .subscribe();
                         }
