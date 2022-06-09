@@ -21,11 +21,11 @@
     <ImageView
         android:id="@+id/preview_image"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/horizontal_picker"
         android:scaleType="fitCenter"
         />
 
@@ -35,7 +35,6 @@
         android:layout_height="match_parent"
         android:textColor="@color/theme_primary_dark"
         android:textSize="14.5dp"
-
         />
 
     <com.project.objectdetector.UI.Views.TemperatureMonitor
@@ -59,6 +58,7 @@
         android:layout_marginTop="58dp"
         android:layout_marginEnd="16dp"
         android:background="@drawable/rounded_corners"
+
         >
 
         <com.google.android.material.imageview.ShapeableImageView
@@ -67,11 +67,11 @@
             android:layout_height="44dp"
             android:layout_margin="4dp"
             android:padding="2dp"
+            android:scaleType="center"
             app:shapeAppearance="@style/circularImageView"
             android:background="@color/theme_primary_light"
-            android:src="@drawable/ic_launcher_foreground"
+            android:src="@drawable/ic_baseline_flip_camera_24"
             />
-
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/resolution_toggle"
@@ -79,9 +79,10 @@
             android:layout_height="44dp"
             android:layout_margin="4dp"
             android:padding="2dp"
+            android:scaleType="center"
             app:shapeAppearance="@style/circularImageView"
             android:background="@color/theme_primary_light"
-            android:src="@drawable/ic_launcher_foreground"
+            android:src="@drawable/ic_temp_24"
             />
 
         <com.google.android.material.imageview.ShapeableImageView

@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -141,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         new Edge2EdgeLayout(this);
+
         parent = findViewById(R.id.parent);
         parent.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
 
@@ -182,6 +184,7 @@ public class MainActivity extends AppCompatActivity {
                     analyzer.setView(boundingBox);
                     analyzer.setInputResolution(Objects.requireNonNull(imageAnalysis.getResolutionInfo()).getResolution());
                     analyzer.setPreviewResolution(new Size(previewView.getWidth(), previewView.getHeight()));
+
                     imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(MainActivity.this)
                             , image -> {
                                 if (getState() == State.REALTIME_DETECTION)
@@ -285,7 +288,6 @@ public class MainActivity extends AppCompatActivity {
 
         imageAnalysis = new ImageAnalysis.Builder()
                 .setTargetResolution(new Size(360, 640))
-//                .setTargetResolution(new Size(720,1280))
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build();
 
@@ -364,15 +366,18 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    int orientation;
     ActivityResultLauncher<Intent> imagePicker = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
                 if (result.getResultCode() == Activity.RESULT_OK) {
                     Intent data = result.getData();
-
                     if(data != null) {
                         try {
                             bitmap = MediaStore.Images.Media.getBitmap(getContentResolver() , Uri.parse(data.getDataString()));
+                            ExifInterface exif = new ExifInterface(data.getDataString());
+                            orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,1);
+
                             Log.e("TAG", "ActivityResultLauncher: data: "+data.getDataString()+"\n parsedData : "+Uri.parse(data.getDataString()));
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -381,19 +386,29 @@ public class MainActivity extends AppCompatActivity {
                         if(bitmap.getWidth() > 1080){       //condition for applying compression
                             bmpUtil = new BitmapUtils();
                             Completable c1 = Completable.fromRunnable(() -> {
-                                        previewImage.setImageBitmap(compressedBmp);
-                                        bitmap.recycle();
-                            }).subscribeOn(AndroidSchedulers.mainThread());
-
-                            Completable c2 = Completable.fromRunnable(() -> {
-                                ObjectDetectorHelper odh = new ObjectDetectorHelper(ObjectDetectorHelper.CLASSIFY_MULTIPLE_OBJECTS
-                                        ,ObjectDetectorOptions.SINGLE_IMAGE_MODE);
-
+                                Log.e("TAG", "Completable : c1 on "+Thread.currentThread().getName());
+                                if(orientation == 8) previewImage.setRotation(270);
+                                if(orientation == 6) previewImage.setRotation(90);
+                                previewImage.setImageBitmap(compressedBmp);
+                                bitmap.recycle();
                             });
 
-                            Completable.fromRunnable(() -> compressedBmp = bmpUtil.compressBitmap(bitmap))
+                            Completable c2 = Completable.fromRunnable(() -> {
+                                Log.e("TAG", "Completable : c2 on "+Thread.currentThread().getName());
+                                ObjectDetectorHelper odh = new ObjectDetectorHelper(ObjectDetectorHelper.CLASSIFY_MULTIPLE_OBJECTS
+                                        ,ObjectDetectorOptions.SINGLE_IMAGE_MODE);
+                                odh.setView(boundingBox);
+                                odh.createDetectorFromBitmap(compressedBmp);
+                            });
+
+                            Completable.fromRunnable(() -> {
+                                        compressedBmp = bmpUtil.compressBitmap(bitmap);
+                                        Log.e("TAG", "Completable : COMPRESS BMP on "+Thread.currentThread().getName());
+                                    })
                                 .subscribeOn(Schedulers.computation())
+                                .observeOn(AndroidSchedulers.mainThread())
                                 .andThen(c1)
+                                .observeOn(Schedulers.computation())
                                 .andThen(c2)
                                 .doOnError((e) -> Log.e("onError", "ActivityResultLauncher: "+e))
                                 .subscribe();

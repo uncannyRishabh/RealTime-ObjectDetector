@@ -20,6 +20,7 @@ import com.google.mlkit.vision.objects.DetectedObject;
 import com.project.objectdetector.R;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @SuppressWarnings({"FieldCanBeLocal"
         , "FieldMayBeLocal"})
@@ -28,11 +29,13 @@ public class BoundingBox extends View {
     private Paint rectPaint;
     private Paint textPaint;
     private RectF boxRect;
+    private RectF textRect;
     private Typeface poppins;
     private final Canvas canvas = new Canvas();
 
     private Size previewRes,inputRes;
 
+    private String mLabel = "";
     private float labelSize = 20f;
     private int labelColor = ContextCompat.getColor(getContext(), R.color.theme_primary_dark);
 
@@ -66,6 +69,28 @@ public class BoundingBox extends View {
 
     }
 
+    private void init(){
+        boxPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        rectPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        boxRect = new RectF();
+        textRect = new RectF();
+//        screenHeight = getResources().getDisplayMetrics().heightPixels;
+
+        boxPaint.setColor(ContextCompat.getColor(getContext(), R.color.theme_primary_dark));
+        boxPaint.setStyle(Paint.Style.STROKE);
+        boxPaint.setStrokeWidth(5f);
+
+        rectPaint.setColor(0x80D2D2EB);
+        rectPaint.setStyle(Paint.Style.FILL);
+
+        poppins = Typeface.create("Poppins", Typeface.NORMAL);
+
+        textPaint.setColor(labelColor);
+        textPaint.setTextSize(labelSize);
+        textPaint.setTypeface(poppins);
+    }
+
     public void setPreviewResolution(Size res){
         this.previewRes = res;
     }
@@ -79,30 +104,17 @@ public class BoundingBox extends View {
         invalidate();
     }
 
-    private void init(){
-        boxPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        rectPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        boxRect = new RectF();
-
-//        screenHeight = getResources().getDisplayMetrics().heightPixels;
-
-        boxPaint.setColor(ContextCompat.getColor(getContext(), R.color.theme_primary_dark));
-        boxPaint.setStyle(Paint.Style.STROKE);
-        boxPaint.setStrokeWidth(5f);
-
-        rectPaint.setColor(ContextCompat.getColor(getContext(), R.color.theme_primary_light));
-        rectPaint.setStyle(Paint.Style.FILL);
-
-        poppins = Typeface.create("Poppins", Typeface.NORMAL);
-
-        textPaint.setColor(labelColor);
-        textPaint.setTextSize(labelSize);
-        textPaint.setTypeface(poppins);
-    }
-
     private void spawnBoxes(Canvas canvas,RectF rect){
         canvas.drawRoundRect(rect, 24f, 24f, boxPaint);
+    }
+
+    private void updateLabel(Canvas canvas) {
+        textRect.set(boxRect.left+6
+                ,boxRect.top+6
+                ,boxRect.right-6
+                ,boxRect.top+labelSize+labelSize);
+        canvas.drawRoundRect(textRect,16f,16f,rectPaint);
+        canvas.drawText(mLabel, boxRect.left+4,boxRect.top+labelSize+8,textPaint);
     }
 
     @Override
@@ -119,15 +131,19 @@ public class BoundingBox extends View {
         super.onDraw(canvas);
 
         if(detectedObjects != null) {
-            for (DetectedObject object : detectedObjects) {
-                Log.e("TAG", "onSuccess: tracking ID "+object.getTrackingId());
-                spawnBoxes(canvas, mapBoxRect(object.getBoundingBox()));
-            }
-        }
+            for (DetectedObject objects : detectedObjects) {
+//                Log.e("TAG", "onSuccess: tracking ID "+object.getTrackingId());
+                spawnBoxes(canvas, mapBoxRect(objects.getBoundingBox()));
 
-        if (detectedObjects == null) {
-            Log.e("TAG", "onDraw: detectedObjects == null");
-            boxRect.set(0, 0, 0, 0);
+                mLabel = objects.getLabels()
+                        .stream()
+                        .map(DetectedObject.Label::getText)
+                        .collect(Collectors.joining(", "));
+
+//                Log.e("TAG", "onDraw: LABELS "+mLabel);
+                updateLabel(canvas);
+            }
+
         }
 
     }
@@ -143,15 +159,6 @@ public class BoundingBox extends View {
                     boundingBox.top * h,
                     boundingBox.right * w,
                     boundingBox.bottom * h);
-//            Log.e("TAG", "mapBoxRect: inputres : "+inputRes);
-//            Log.e("TAG", "mapBoxRect: previewres : "+previewRes);
-//            Log.e("TAG", "mapBoxRect: boundingBox :"+boundingBox);
-//            Log.e("TAG", "mapBoxRect: w :"+w+" h : "+h);
-
-//            Log.e("TAG", "mapBoxRect: boundingBox :"+new RectF(boundingBox.left * w,
-//                    boundingBox.top * h,
-//                    boundingBox.right * w,
-//                    boundingBox.bottom * h));
         }
         return boxRect;
     }

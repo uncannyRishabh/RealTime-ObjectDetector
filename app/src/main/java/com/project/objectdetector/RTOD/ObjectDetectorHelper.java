@@ -1,10 +1,13 @@
 package com.project.objectdetector.RTOD;
 
+import android.graphics.Bitmap;
+import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.IntRange;
 
 import com.google.android.gms.tasks.Task;
+import com.google.mlkit.common.model.LocalModel;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.objects.DetectedObject;
 import com.google.mlkit.vision.objects.ObjectDetection;
@@ -16,7 +19,6 @@ import java.util.List;
 
 public class ObjectDetectorHelper {
     private BoundingBox box;
-
     private ObjectDetector objectDetector;
     public static final int CLASSIFY_SINGLE_OBJECT = 0;
     public static final int CLASSIFY_MULTIPLE_OBJECTS = 1;
@@ -36,13 +38,13 @@ public class ObjectDetectorHelper {
             options = new ObjectDetectorOptions.Builder()
                     .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
                     .enableClassification()
-                    .enableMultipleObjects()
                     .build();
         }
         else {
             options = new ObjectDetectorOptions.Builder()
                     .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
                     .enableClassification()
+                    .enableMultipleObjects()
                     .build();
         }
 
@@ -68,6 +70,21 @@ public class ObjectDetectorHelper {
         }
 
         objectDetector = ObjectDetection.getClient(options);
+    }
+
+    public void createDetectorFromBitmap(Bitmap bitmap){
+        InputImage image = InputImage.fromBitmap(bitmap,0);
+
+        processImage(image).addOnSuccessListener(detectedObjects -> {
+                    getView().setDetectedObjects(detectedObjects);
+                    for(DetectedObject detectedObject : detectedObjects){
+                        Log.e("TAG", "createDetectorFromBitmap: " + detectedObject.getBoundingBox());
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    getView().postInvalidate();
+                    Log.e("TAG", "analyze: unable to detect");
+                });
     }
 
     public Task<List<DetectedObject>> processImage(InputImage image){
