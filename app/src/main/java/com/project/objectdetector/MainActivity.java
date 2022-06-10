@@ -47,6 +47,7 @@ import com.project.objectdetector.RTOD.FrameAnalyzer;
 import com.project.objectdetector.RTOD.ObjectDetectorHelper;
 import com.project.objectdetector.UI.Edge2EdgeLayout;
 import com.project.objectdetector.UI.Views.BoundingBox;
+import com.project.objectdetector.UI.Views.CaptureButton;
 import com.project.objectdetector.UI.Views.HorizontalPicker;
 import com.project.objectdetector.Utils.BitmapUtils;
 
@@ -70,7 +71,8 @@ public class MainActivity extends AppCompatActivity {
     private FrameAnalyzer analyzer;
     private HorizontalPicker picker;
     private BoundingBox boundingBox;
-    private ShapeableImageView fps, resolution, flash, capture;
+    private ShapeableImageView fps, resolution, flash; //, capture;
+    private CaptureButton capture;
     private LinearLayout btnHolder;
     private TextView toolTip;
     private ImageView previewImage;
@@ -335,7 +337,8 @@ public class MainActivity extends AppCompatActivity {
                 bindCamera();
                 if(analyzer!=null) analyzer.closeDetector();
                 imageAnalysis.clearAnalyzer();
-                capture.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_round_capture_ttd));
+//                capture.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_round_capture_ttd));
+                capture.setBitmapDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_round_capture_ttd));
                 setTooltipText("Tap to capture image");
                 toolTip.postDelayed(hideToolTip, 2500);
 
@@ -345,7 +348,7 @@ public class MainActivity extends AppCompatActivity {
             case 2: {
                 setState(State.REALTIME_DETECTION);
                 bindCamera();
-                capture.setImageDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_baseline_capture_realtime));
+                capture.setBitmapDrawable(ContextCompat.getDrawable(MainActivity.this, R.drawable.ic_baseline_capture_realtime));
                 setTooltipText("Tap the capture button to begin detection");
                 toolTip.postDelayed(hideToolTip, 2500);
 

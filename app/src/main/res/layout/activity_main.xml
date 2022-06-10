@@ -112,7 +112,21 @@
         android:visibility="visible"
         android:layout_marginBottom="30dp"/>
 
-    <com.google.android.material.imageview.ShapeableImageView
+<!--    <com.google.android.material.imageview.ShapeableImageView-->
+<!--        android:id="@+id/capture_btn"-->
+<!--        android:layout_width="84dp"-->
+<!--        android:layout_height="84dp"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintBottom_toTopOf="@id/horizontal_picker"-->
+<!--        android:layout_marginBottom="32dp"-->
+<!--        app:shapeAppearance="@style/circularImageView"-->
+<!--        android:background="@color/theme_primary_dark"-->
+<!--        android:scaleType="centerInside"-->
+<!--        android:src="@drawable/ic_round_capture_ttd"-->
+<!--        />-->
+
+    <com.project.objectdetector.UI.Views.CaptureButton
         android:id="@+id/capture_btn"
         android:layout_width="84dp"
         android:layout_height="84dp"
@@ -120,10 +134,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@id/horizontal_picker"
         android:layout_marginBottom="32dp"
-        app:shapeAppearance="@style/circularImageView"
-        android:background="@color/theme_primary_dark"
-        android:scaleType="centerInside"
-        android:src="@drawable/ic_round_capture_ttd"
+
         />
 
     <com.project.objectdetector.UI.Views.HorizontalPicker

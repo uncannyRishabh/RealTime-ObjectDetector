@@ -148,13 +148,17 @@ public class BoundingBox extends View {
 
     }
 
+    /**
+     * Converts output rect from (360*640) to native resolution e.g(1080*2400)
+     * @param boundingBox
+     * @return
+     */
     public RectF mapBoxRect(Rect boundingBox){
         float w;
         float h;
         if(inputRes !=null){
             h = previewRes.getHeight()/(float) inputRes.getWidth();
             w = previewRes.getWidth()/(float) inputRes.getHeight();
-
             boxRect.set(boundingBox.left * w,
                     boundingBox.top * h,
                     boundingBox.right * w,
