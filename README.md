@@ -18,4 +18,4 @@ On the design front we followed [Material design principles](https://material.io
 - Apk size increases, since we are bundling multiple tflite models.
 
 ## App Link
-[LINK](https://github.com/uncannyRishabh/RealTime-ObjectDetector/blob/master/app/release/app-release.apk)
+[DOWNLOAD](https://github.com/uncannyRishabh/RealTime-ObjectDetector/blob/master/app/release/app-release.apk)
